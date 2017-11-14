@@ -42,13 +42,17 @@ library(HiCcompare)
 library(InteractionSet)
 library(readr)
 library(HiCcompare)
-
+#test case #1, using all hiccompare output.
+allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")
+#test case #2 single chromosome
+#test case #3 NAs
+#test case #4 infinites
 makeGenomicInteractionsFromHiCcompare<-function(hiccontactdf,n=nrow(hiccontactdf))
 {
   GInteractions( GRanges(hiccontactdf$chr1[1:n],
-                        IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
-  GRanges(hiccontactdf$chr2[1:n],
-                        IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])))
+                         IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
+                 GRanges(hiccontactdf$chr2[1:n],
+                         IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
 }
 #From Sean's code
 makeGenomicInteractionsFromHiCPro <- function(matrixfile,bedfile) {
