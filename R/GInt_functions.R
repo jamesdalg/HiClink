@@ -42,11 +42,11 @@ library(InteractionSet)
 library(readr)
 library(HiCcompare)
 #------------------------------------------test case #1, using all hiccompare output.
-allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=1000)
-testcasen1000GI<-makeGInteractionsFromHiCcompare(hiccontactdf = allhiccontacts_readr,includemetadata = T)
-testcasen1000GI
-testcasen1000GenInt<-makeGenomicInteractionsFromHiCcompare(hiccontactdf = allhiccontacts_readr,includemetadata = T)
-testcasen1000GenInt
+# allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=1000)
+# testcasen1000GI<-makeGInteractionsFromHiCcompare(hiccontactdf = allhiccontacts_readr,includemetadata = T)
+# testcasen1000GI
+# testcasen1000GenInt<-makeGenomicInteractionsFromHiCcompare(hiccontactdf = allhiccontacts_readr,includemetadata = T)
+# testcasen1000GenInt
 #test case #2--------------------------------end
 #allhiccontacts_na_removed<-na.omit(allhiccontacts[1:10])
 # debug(makeGenomicInteractionsFromHiCcompare)
