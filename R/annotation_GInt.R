@@ -15,14 +15,7 @@
 #' 
 #' @export
 #' @importFrom readr read_csv
-<<<<<<< HEAD
 #' @importFrom GenomicInteractions
 #' 
 #' 
-library(GenomicInteractions)
-library(diffHic)
-=======
-#' 
-#' 
-#' 
->>>>>>> b2ed583eb7e4d437ec4c88018252301a9cde739a
+

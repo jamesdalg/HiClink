@@ -43,7 +43,7 @@ library(InteractionSet)
 library(readr)
 library(HiCcompare)
 #test case #1, using all hiccompare output.
-allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")
+#allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")
 #test case #2 single chromosome
 #test case #3 NAs
 #test case #4 infinites
