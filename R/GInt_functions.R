@@ -7,7 +7,6 @@ library(InteractionSet)
 library(readr)
 library(HiCcompare)
 #missmap(allhiccontacts)
-# allhiccontacts_na_removed<-na.omit(allhiccontacts)
 # 
 # region1hic <- GRanges(allhiccontacts$chr1[1:10],
 #                       IRanges(as.numeric(allhiccontacts$start1)[1:10], as.numeric(allhiccontacts$end1)[1:10]))
@@ -42,44 +41,67 @@ library(HiCcompare)
 library(InteractionSet)
 library(readr)
 library(HiCcompare)
-#test case #1, using all hiccompare output.
+#------------------------------------------test case #1, using all hiccompare output.
+allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=1000)
+testcasen1000GI<-makeGInteractionsFromHiCcompare(hiccontactdf = allhiccontacts_readr,includemetadata = T)
+testcasen1000GI
+testcasen1000GenInt<-makeGenomicInteractionsFromHiCcompare(hiccontactdf = allhiccontacts_readr,includemetadata = T)
+testcasen1000GenInt
+#test case #2--------------------------------end
+#allhiccontacts_na_removed<-na.omit(allhiccontacts[1:10])
+# debug(makeGenomicInteractionsFromHiCcompare)
+# testcasen1000
+# hiccontactdf<-allhiccontacts_readr
+# includemetadata=TRUE
+# n<-nrow(hiccontactdf)
+# if(includemetadata==TRUE)
+# {
+#   testcasen1000<-GInteractions( GRanges(hiccontactdf$chr1[1:n],
+#                          IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
+#                  GRanges(hiccontactdf$chr2[1:n],
+#                          IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
+# }
 #allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")
 #test case #2 single chromosome
 #test case #3 NAs
 #test case #4 infinites
-makeGInteractionsFromHiCcompare<-function(hiccontactdf,n=nrow(hiccontactdf),includemetadata=T)
+#FUTURE: add counts for genomic interactions, from a bedfile.
+makeGInteractionsFromHiCcompare<-function(hiccontactdf=NULL,n=nrow(hiccontactdf),includemetadata=TRUE)
 {
   if(includemetadata==TRUE)
   {
-    GInteractions( GRanges(hiccontactdf$chr1[1:n],
+   output<-GInteractions( GRanges(hiccontactdf$chr1[1:n],
                            IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
                    GRanges(hiccontactdf$chr2[1:n],
                            IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
+    
   }
   if (includemetadata==FALSE)
-  {                                 GInteractions( GRanges(hiccontactdf$chr1[1:n],
+  {   
+    output<-GInteractions( GRanges(hiccontactdf$chr1[1:n],
                                                            IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
                                                    GRanges(hiccontactdf$chr2[1:n],
                                                            IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])))
   }
-  
+  return(output)
 }
+#test cases
 makeGenomicInteractionsFromHiCcompare<-function(hiccontactdf,n=nrow(hiccontactdf),includemetadata=T)
 {
   if(includemetadata==TRUE)
   {
-    GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
+    output<-GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
                            IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
                    GRanges(hiccontactdf$chr2[1:n],
                            IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
   }
   if (includemetadata==FALSE)
-  {                                 GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
+  {                                 output<-GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
                                                            IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
                                                    GRanges(hiccontactdf$chr2[1:n],
                                                            IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])))
   }
-  
+  return(output)
 }
 as.GenomicInteraction<-function(GInteractions_data)
 {
