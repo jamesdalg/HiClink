@@ -47,12 +47,46 @@ allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts
 #test case #2 single chromosome
 #test case #3 NAs
 #test case #4 infinites
-makeGenomicInteractionsFromHiCcompare<-function(hiccontactdf,n=nrow(hiccontactdf))
+makeGInteractionsFromHiCcompare<-function(hiccontactdf,n=nrow(hiccontactdf),includemetadata=T)
 {
-  GInteractions( GRanges(hiccontactdf$chr1[1:n],
-                         IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
-                 GRanges(hiccontactdf$chr2[1:n],
-                         IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
+  if(includemetadata==TRUE)
+  {
+    GInteractions( GRanges(hiccontactdf$chr1[1:n],
+                           IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
+                   GRanges(hiccontactdf$chr2[1:n],
+                           IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
+  }
+  if (includemetadata==FALSE)
+  {                                 GInteractions( GRanges(hiccontactdf$chr1[1:n],
+                                                           IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
+                                                   GRanges(hiccontactdf$chr2[1:n],
+                                                           IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])))
+  }
+  
+}
+makeGenomicInteractionsFromHiCcompare<-function(hiccontactdf,n=nrow(hiccontactdf),includemetadata=T)
+{
+  if(includemetadata==TRUE)
+  {
+    GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
+                           IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
+                   GRanges(hiccontactdf$chr2[1:n],
+                           IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
+  }
+  if (includemetadata==FALSE)
+  {                                 GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
+                                                           IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
+                                                   GRanges(hiccontactdf$chr2[1:n],
+                                                           IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])))
+  }
+  
+}
+as.GenomicInteraction<-function(GInteractions_data)
+{
+  if(class(GInteractions_data)=="GInteractions")
+  {
+    
+  }
 }
 #From Sean's code
 makeGenomicInteractionsFromHiCPro <- function(matrixfile,bedfile) {
