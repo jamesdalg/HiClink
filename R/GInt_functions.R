@@ -154,6 +154,9 @@ plotSushiArcPlotsWithGenes<-function(chrom,chromstart,chromend,window,txbedpe,co
   
 }
 library(regioneR)
+library(doMC)
+library(foreach)
+registerDoMC(8)
 getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwidth,chroms="ALL")
 {
   #testcase #1
@@ -173,7 +176,7 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
     
   }
   
-  genomestats<-foreach(chromindex=1:length(chromset)) %do%
+  genomestats<-foreach(chromindex=1:length(chromset)) %dopar%
   {
     chrom<-chromset[chromindex]
     anchoroneranges_in_chrom<-anchors(hiccontacts_with_metadata)$first[seqnames(anchors(hiccontacts_with_metadata)$first)==chrom,]
