@@ -24,13 +24,13 @@ genomestats_1e6complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicg
 genomestats_1e6complete_df<-ldply(genomestats_1e6complete,data.frame)
 fwrite(genomestats_1e6complete_df,"genomestats_1e6complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
 genomestats_1e5complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e5),data.frame)
-fwrite(genomestats_1e5complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+fwrite(genomestats_1e5complete,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
 genomestats_1e4complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e4),data.frame)
-fwrite(genomestats_1e4complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+fwrite(genomestats_1e4complete,"genomestats_1e4complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
 genomestats_5e3complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=5e3),data.frame)
-fwrite(genomestats_1e4complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+fwrite(genomestats_5e3complete,"genomestats_5e3complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
 
 genomestats_1e3complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e3),data.frame)
-fwrite(genomestats_1e3complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+fwrite(genomestats_1e3complete,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
 
 #end analysis code
