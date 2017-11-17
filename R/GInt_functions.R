@@ -2,11 +2,12 @@
 #install.packages("Amelia")
 #sample code:
 #library(Amelia)
-#library(data.table)
+library(data.table)
 library(InteractionSet)
 library(GenomicInteractions)
 library(readr)
 library(HiCcompare)
+library(plyr)
 #missmap(allhiccontacts)
 # 
 # region1hic <- GRanges(allhiccontacts$chr1[1:10],
@@ -42,6 +43,7 @@ library(HiCcompare)
 library(InteractionSet)
 library(readr)
 library(HiCcompare)
+library(genoset)
 #------------------------------------------test case #1, using all hiccompare output.
 # allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=1000)
 # testcasen1000GI<-makeGInteractionsFromHiCcompare(hiccontactdf = allhiccontacts_readr,includemetadata = T)
@@ -156,7 +158,9 @@ plotSushiArcPlotsWithGenes<-function(chrom,chromstart,chromend,window,txbedpe,co
 library(regioneR)
 library(doMC)
 library(foreach)
+library(genoset)
 registerDoMC(8)
+
 getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwidth,chroms="ALL")
 {
   #testcase #1
@@ -168,17 +172,18 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
   #we will only consider intrachromosomal interactions for the purposes of this function. It would be simple to rearrange things to allow for intrachromosomal (i.e. where anchor1's chromosome is not equal to anchor2's chromosome)
   if (chroms=="ALL")
   {  
-    chromset<-intersect(intersect(seqnames(anchorOne(hiccontacts_with_metadata)),seqnames(chipseqGRanges)),intersect(seqnames(anchorTwo(hiccontacts_with_metadata)),seqnames(chipseqGRanges)))
+    chromset<-intersect(intersect(as.character(seqnames(anchorOne(hiccontacts_with_metadata))),as.character(seqnames(chipseqGRanges))),intersect(as.character(seqnames(anchorTwo(hiccontacts_with_metadata))),as.character(seqnames(chipseqGRanges))))
   } else
   {
     chromset<-intersect(chroms,
-                        intersect(intersect(seqnames(anchorOne(hiccontacts_with_metadata)),seqnames(chipseqGRanges)),intersect(seqnames(anchorTwo(hiccontacts_with_metadata)),seqnames(chipseqGRanges))))
-    
+                        intersect(intersect(as.character(seqnames(anchorOne(hiccontacts_with_metadata))),as.character(seqnames(chipseqGRanges))),intersect(as.character(seqnames(anchorTwo(hiccontacts_with_metadata))),as.character(seqnames(chipseqGRanges)))))
   }
   
   genomestats<-foreach(chromindex=1:length(chromset)) %dopar%
   {
-    chrom<-chromset[chromindex]
+    
+    chrom<-as.character(chromset[chromindex])
+    print(chrom)
     anchoroneranges_in_chrom<-anchors(hiccontacts_with_metadata)$first[seqnames(anchors(hiccontacts_with_metadata)$first)==chrom,]
     anchortworanges_in_chrom<-anchors(hiccontacts_with_metadata)$second[seqnames(anchors(hiccontacts_with_metadata)$second)==chrom,]
     #  anchortworanges<-ranges(anchorOne(hiccontacts_with_metadata))
@@ -193,6 +198,7 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
     #it only gathers stats for those regions that have overlaps. Others throw an error and pass handling takes over.
     chromstats<-foreach::foreach(binindex=1:(length(binstarts)-1),.combine=rbind,.errorhandling = "pass") %do%
     {
+      print(binstarts[binindex])
       firstanchor<-anchorOne(hiccontacts_with_metadata)
       secondanchor<-anchorOne(hiccontacts_with_metadata)
       hiccontacts_with_metadata_anchorOne_currentbin_subset<-GenomicRanges::restrict(x=firstanchor[seqnames(firstanchor)==chrom,],start=binstarts[binindex],end = binstarts[binindex]+binwidth)
@@ -213,11 +219,11 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
       # #{
       # #  Instead of adding a stats line with NA for a bin that has no overlaps, the program bypasses this region and moves forward.
       # 
-      # }
-      if (nrow(allBinOverlaps)!=0)
+      #
+      if (nrow(allBinOverlaps)!=0 & !(is.null(length(hiccontacts_with_metadata_anchorOne_currentbin_subset))) & !(is.null(length(hiccontacts_with_metadata_anchorOne_currentbin_subset))))
       {
         #colMeans(allBinOverlaps)
-        bin_jaccard<-nrow(allBinOverlaps)/(nrow(hiccontacts_with_metadata_anchorOne_currentbin_subset)+nrow(hiccontacts_with_metadata_anchorOne_currentbin_subset))
+        bin_jaccard<-nrow(allBinOverlaps)/(length(hiccontacts_with_metadata_anchorOne_currentbin_subset)+length(hiccontacts_with_metadata_anchorOne_currentbin_subset))
         binstats<-c(chrom,binstarts[binindex],binstarts[binindex]+binwidth,binwidth,matrixStats::colMeans2(as.matrix(allBinOverlaps[,c("ov.bases","pct.basesA","pct.basesB")])),bin_jaccard)
         names(binstats)<-c("chrom","binstart","binend","binwidth","ov.bases.mean","pct.overlappingbasesHiC.mean","pct.overlappingbaseschipseq.mean","bin_jaccard")
         binstats
@@ -233,6 +239,30 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
   #  output$overlaps
   #  
 }
+#test case #1
+# SATB1.Pgr.MACS.summits.bed<-data.table::fread("W:/dalgleishjl/chipseq/swarmoutput/T47-D_SATB1_ChIP_Pgr_08.20.09T-47D_SATB1-10.02.09_summits.bed",sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+# 
+# SATB1.Pgr.MACS.summits.bed.GR<-GenomicRanges::GRanges(SATB1.Pgr.MACS.summits.bed)
+# chromosomestokeep<-paste0("chr",c(1:22,"X"))
+# SATB1.Pgr.MACS.summits.bed.GR.filtered<-filterChromosomes(SATB1.Pgr.MACS.summits.bed.GR,organism = "hg",chr.type = "canonical",keep.chr =intersect(seqlevels(SATB1.Pgr.MACS.summits.bed.GR),chromosomestokeep))
+
+#hicgenint_small<-makeGenomicInteractionsFromHiCcompare(na.omit(read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=10000)),includemetadata = TRUE)
+#genomestats_test<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_small,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e7)
+#genomestats_test_df<-ldply(genomestats_test,data.frame)
+
+#test case #2-- multiple chromosomes
+hicgenint_full<-makeGenomicInteractionsFromHiCcompare(na.omit(read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")),includemetadata = TRUE)
+hicgenint_full_sig<-hicgenint_full[hicgenint_full@elementMetadata$....p.value<0.05,]
+SATB1.Pgr.MACS.summits.bed<-data.table::fread("W:/dalgleishjl/chipseq/swarmoutput/T47-D_SATB1_ChIP_Pgr_08.20.09T-47D_SATB1-10.02.09_summits.bed",sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+
+SATB1.Pgr.MACS.summits.bed.GR<-GenomicRanges::GRanges(SATB1.Pgr.MACS.summits.bed)
+chromosomestokeep<-paste0("chr",c(1:22,"X"))
+SATB1.Pgr.MACS.summits.bed.GR.filtered<-filterChromosomes(SATB1.Pgr.MACS.summits.bed.GR,organism = "hg",chr.type = "canonical",keep.chr =intersect(seqlevels(SATB1.Pgr.MACS.summits.bed.GR),chromosomestokeep))
+
+genomestats_1e7complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e7)
+genomestats_1e7complete_df<-ldply(genomestats_1e7complete,data.frame)
+fwrite(genomestats_1e7complete_df,"genomestats_1e7complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+
 generateHiCbinsubset<-function(hiccontacts_with_metadata,chrom=NULL,start=0,binwidth=NULL,anchor="first")
 {
   GenomicRanges::restrict(x=firstanchor[seqnames(InteractionSet::anchors(hiccontacts_with_metadata)[,anchor])==chrom,],start=start,end = start+binwidth)

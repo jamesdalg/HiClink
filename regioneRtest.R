@@ -6,6 +6,12 @@ library(BSgenome.Hsapiens.UCSC.hg19)
 library(BSgenome.Hsapiens.UCSC.hg19.masked)
 library(testthat)
 library(foreach)
+library(readr)
+library(data.table)
+library(devtools)
+library(plyr)
+library(data.table)
+
 options(error = utils::recover)
 #install.packages(c("BiocStyle", "knitr", "BSgenome.Hsapiens.UCSC.hg19.masked", "testthat"))
 hg19genmask<-getGenomeAndMask(genome = BSgenome.Hsapiens.UCSC.hg19,mask =BSgenome.Hsapiens.UCSC.hg19.masked )
@@ -13,8 +19,6 @@ hg19genmask<-getGenomeAndMask(genome = BSgenome.Hsapiens.UCSC.hg19,mask =BSgenom
 #hg19genmask$mas
 #get Granges1 & 2, run permutation test
 #these tests will probably have to be run on biowulf, ultimately. Use small samples of each GRange.
-library(readr)
-library(data.table)
 #production analysis code (not functionalized yet)
 allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=1000)
 hiccontactdf<-na.omit(allhiccontacts_readr)
@@ -23,7 +27,6 @@ hiccontacts_with_metadata<-GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
                                                         IRanges(as.numeric(hiccontactdf$start1)[1:n], as.numeric(hiccontactdf$end1)[1:n])),
                                                 GRanges(hiccontactdf$chr2[1:n],
                                                         IRanges(as.numeric(hiccontactdf$start2)[1:n], as.numeric(hiccontactdf$end2)[1:n])),...=as.data.frame(hiccontactdf[,7:ncol(hiccontactdf)]))
-library(devtools)
 setwd("W:/dalgleishjl/HiClink/HiClink/")
 devtools::load_all(".")
 #get interaction data
@@ -142,8 +145,9 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
     
   }
   
-  genomestats<-foreach(chromindex=1:length(chromset)) %do%
+  genomestats<-foreach(chromindex=1:length(chromset)) %dopar%
 {
+  print(chromset[chromindex])
   chrom<-chromset[chromindex]
   anchoroneranges_in_chrom<-anchors(hiccontacts_with_metadata)$first[seqnames(anchors(hiccontacts_with_metadata)$first)==chrom,]
   anchortworanges_in_chrom<-anchors(hiccontacts_with_metadata)$second[seqnames(anchors(hiccontacts_with_metadata)$second)==chrom,]
@@ -157,8 +161,9 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
   #get the size of the chromosome (or the maximum position of the end of the range, rounded down to the nearest binwidth for the start)
   binstarts<-c(seq(from=0, to=maxbinstart,by=binwidth))
 #it only gathers stats for those regions that have overlaps. Others throw an error and pass handling takes over.
-  chromstats<-foreach::foreach(binindex=1:(length(binstarts)-1),.combine=rbind,.errorhandling = "pass") %do%
+  chromstats<-foreach::foreach(binindex=1:(length(binstarts)-1),.combine=rbind,.errorhandling = "pass") %dopar%
   {
+    print(binstarts[binindex])
   firstanchor<-anchorOne(hiccontacts_with_metadata)
   secondanchor<-anchorOne(hiccontacts_with_metadata)
   hiccontacts_with_metadata_anchorOne_currentbin_subset<-GenomicRanges::restrict(x=firstanchor[seqnames(firstanchor)==chrom,],start=binstarts[binindex],end = binstarts[binindex]+binwidth)
@@ -199,7 +204,10 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
 #  output$overlaps
 #  
 }
+registerDoMC(8)
+ptm <- proc.time()
 genomestats_100sample<-getBinwiseOverlapStats(hiccontacts_with_metadata = sample(hicgenint_full_sig,100),chipseqGRanges = sample(SATB1.Pgr.MACS.summits.bed.GR.filtered,100),binwidth=1e7)
+proc.time() - ptm
 genomestats_5000sample<-getBinwiseOverlapStats(hiccontacts_with_metadata = sample(hicgenint_full_sig,5000),chipseqGRanges = sample(SATB1.Pgr.MACS.summits.bed.GR.filtered,5000),binwidth=1e7)
 save.image("overlapfunction_genome_wide_complete.RData")
 genomestats_1e7complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e7)
@@ -207,8 +215,17 @@ genomestats_1e7complete_df<-ldply(genomestats_1e7complete,data.frame)
 library(plyr)
 genomestats_1e7complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e7)
 genomestats_1e7complete_df<-ldply(genomestats_1e7complete,data.frame)
-
 fwrite(genomestats_1e7complete_df,"genomestats_1e7complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+genomestats_1e6complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e6)
+genomestats_1e6complete_df<-ldply(genomestats_1e6complete,data.frame)
+fwrite(genomestats_1e6complete_df,"genomestats_1e6complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+genomestats_1e5complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e5),data.frame)
+fwrite(genomestats_1e5complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+genomestats_1e4complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e4),data.frame)
+fwrite(genomestats_1e4complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+genomestats_1e3complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e3),data.frame)
+fwrite(genomestats_1e3complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+
 #-----------------------------------------------------------------------------------------------------
 #EXAMPLE1 code for regioneR (p.29)
 
