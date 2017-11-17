@@ -250,19 +250,30 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
 #genomestats_test<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_small,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e7)
 #genomestats_test_df<-ldply(genomestats_test,data.frame)
 
-#test case #2-- multiple chromosomes
-hicgenint_full<-makeGenomicInteractionsFromHiCcompare(na.omit(read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")),includemetadata = TRUE)
-hicgenint_full_sig<-hicgenint_full[hicgenint_full@elementMetadata$....p.value<0.05,]
-SATB1.Pgr.MACS.summits.bed<-data.table::fread("W:/dalgleishjl/chipseq/swarmoutput/T47-D_SATB1_ChIP_Pgr_08.20.09T-47D_SATB1-10.02.09_summits.bed",sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
-
-SATB1.Pgr.MACS.summits.bed.GR<-GenomicRanges::GRanges(SATB1.Pgr.MACS.summits.bed)
-chromosomestokeep<-paste0("chr",c(1:22,"X"))
-SATB1.Pgr.MACS.summits.bed.GR.filtered<-filterChromosomes(SATB1.Pgr.MACS.summits.bed.GR,organism = "hg",chr.type = "canonical",keep.chr =intersect(seqlevels(SATB1.Pgr.MACS.summits.bed.GR),chromosomestokeep))
-
-genomestats_1e7complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e7)
-genomestats_1e7complete_df<-ldply(genomestats_1e7complete,data.frame)
-fwrite(genomestats_1e7complete_df,"genomestats_1e7complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
-
+# #test case #2-- multiple chromosomes
+# hicgenint_full<-makeGenomicInteractionsFromHiCcompare(na.omit(read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")),includemetadata = TRUE)
+# hicgenint_full_sig<-hicgenint_full[hicgenint_full@elementMetadata$....p.value<0.05,]
+# SATB1.Pgr.MACS.summits.bed<-data.table::fread("W:/dalgleishjl/chipseq/swarmoutput/T47-D_SATB1_ChIP_Pgr_08.20.09T-47D_SATB1-10.02.09_summits.bed",sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+# 
+# SATB1.Pgr.MACS.summits.bed.GR<-GenomicRanges::GRanges(SATB1.Pgr.MACS.summits.bed)
+# chromosomestokeep<-paste0("chr",c(1:22,"X"))
+# SATB1.Pgr.MACS.summits.bed.GR.filtered<-filterChromosomes(SATB1.Pgr.MACS.summits.bed.GR,organism = "hg",chr.type = "canonical",keep.chr =intersect(seqlevels(SATB1.Pgr.MACS.summits.bed.GR),chromosomestokeep))
+# 
+# genomestats_1e7complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e7)
+# genomestats_1e7complete_df<-ldply(genomestats_1e7complete,data.frame)
+# fwrite(genomestats_1e7complete_df,"genomestats_1e7complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+# #additional analysis code to run:
+# genomestats_1e6complete<-getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e6)
+# genomestats_1e6complete_df<-ldply(genomestats_1e6complete,data.frame)
+# fwrite(genomestats_1e6complete_df,"genomestats_1e6complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+# genomestats_1e5complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e5),data.frame)
+# fwrite(genomestats_1e5complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+# genomestats_1e4complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e4),data.frame)
+# fwrite(genomestats_1e4complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+# genomestats_1e3complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e3),data.frame)
+# fwrite(genomestats_1e3complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
+# 
+# #end analysis code
 generateHiCbinsubset<-function(hiccontacts_with_metadata,chrom=NULL,start=0,binwidth=NULL,anchor="first")
 {
   GenomicRanges::restrict(x=firstanchor[seqnames(InteractionSet::anchors(hiccontacts_with_metadata)[,anchor])==chrom,],start=start,end = start+binwidth)
