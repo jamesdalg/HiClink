@@ -20,7 +20,7 @@ hg19genmask<-getGenomeAndMask(genome = BSgenome.Hsapiens.UCSC.hg19,mask =BSgenom
 #get Granges1 & 2, run permutation test
 #these tests will probably have to be run on biowulf, ultimately. Use small samples of each GRange.
 #production analysis code (not functionalized yet)
-allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=1000)
+allhiccontacts_readr<-read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts_withoutheaders.csv")
 hiccontactdf<-na.omit(allhiccontacts_readr)
 n<-nrow(hiccontactdf)
 hiccontacts_with_metadata<-GenomicInteractions( GRanges(hiccontactdf$chr1[1:n],
@@ -31,7 +31,7 @@ setwd("W:/dalgleishjl/HiClink/HiClink/")
 devtools::load_all(".")
 #get interaction data
 hicgenint_small<-makeGenomicInteractionsFromHiCcompare(na.omit(read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv",n_max=10000)),includemetadata = TRUE)
-hicgenint_full<-makeGenomicInteractionsFromHiCcompare(na.omit(read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts.csv")),includemetadata = TRUE)
+hicgenint_full<-makeGenomicInteractionsFromHiCcompare(na.omit(read_csv("W:/dalgleishjl/straw/tohiccompare/allhiccontacts_withoutheaders.csv")),includemetadata = TRUE)
 hicgenint_full_sig<-hicgenint_full[hicgenint_full@elementMetadata$....p.value<0.05,]
 #get chipseq data
 SATB1.Pgr.MACS.summits.bed<-data.table::fread("W:/dalgleishjl/chipseq/swarmoutput/T47-D_SATB1_ChIP_Pgr_08.20.09T-47D_SATB1-10.02.09_summits.bed",sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
@@ -66,26 +66,27 @@ B=GenomicRanges::restrict(x=anchorOne(hicgenint_full_sig),start=currentbinstart,
                        evaluate.function=numOverlaps, count.once=TRUE,
                        genome="hg19", mc.set.seed=FALSE, mc.cores=1)
 save.image("databeforepermtestwithchipseqandanchors.RData")
+ptm <- proc.time()
 SATB1.Prg.chip.perm.test.anchor1.100perm<-permTest(A=SATB1.Pgr.MACS.summits.bed.GR.filtered,B=anchorTwo(hicgenint_full_sig),ntimes=100,
                                                   randomize.function=randomizeRegions,
                                                   evaluate.function=numOverlaps, count.once=TRUE,
                                                   genome="hg19", mc.set.seed=FALSE, mc.cores=1)
-
+proc.time() - ptm
 SATB1.Prg.chip.perm.test.anchor2.100perm<-permTest(A=SATB1.Pgr.MACS.summits.bed.GR.filtered,B=anchorTwo(hicgenint_full_sig),ntimes=100,
                                                   randomize.function=randomizeRegions,
                                                   evaluate.function=numOverlaps, count.once=TRUE,
                                                   genome="hg19", mc.set.seed=FALSE, mc.cores=1)
-
+proc.time() - ptm
 SATB1.Prg.chip.perm.test.anchor1.1kperm<-permTest(A=SATB1.Pgr.MACS.summits.bed.GR.filtered,B=anchorTwo(hicgenint_full_sig),ntimes=1000,
                                                    randomize.function=randomizeRegions,
                                                    evaluate.function=numOverlaps, count.once=TRUE,
                                                    genome="hg19", mc.set.seed=FALSE, mc.cores=1)
-
+proc.time() - ptm
 SATB1.Prg.chip.perm.test.anchor2.1kperm<-permTest(A=SATB1.Pgr.MACS.summits.bed.GR.filtered,B=anchorTwo(hicgenint_full_sig),ntimes=1000,
                                                    randomize.function=randomizeRegions,
                                                    evaluate.function=numOverlaps, count.once=TRUE,
                                                    genome="hg19", mc.set.seed=FALSE, mc.cores=1)
-
+proc.time() - ptm
 SATB1.Prg.chip.perm.test.anchor1.10kperm<-permTest(A=SATB1.Pgr.MACS.summits.bed.GR.filtered,B=anchorTwo(hicgenint_full_sig),ntimes=10000,
                                            randomize.function=randomizeRegions,
                                            evaluate.function=numOverlaps, count.once=TRUE,
