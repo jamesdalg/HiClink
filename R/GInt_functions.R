@@ -239,6 +239,104 @@ getBinwiseOverlapStats<-function(hiccontacts_with_metadata,chipseqGRanges,binwid
   #  output$overlaps
   #  
 }
+plotHiCGeneArcWithGviz<-function(geneSymbol=NULL,hiccontacts_with_metadata=NULL,peakfn1=NULL,peakfn2=NULL,peakfn3=NULL,peakfn4=NULL,peakfn5=NULL,skippreprocessing=F)
+{
+  if(skippreprocessing==FALSE)
+  {
+    hg19.refseq.db<-GenomicFeatures::makeTxDbFromUCSC(genome="hg19", table="refGene")
+    refseq.genes = genes(hg19.refseq.db)
+    refseq.transcripts = transcriptsBy(hg19.refseq.db, by="gene")
+    hg19_refseq_promoters <- unique(unlist(promoters(refseq.transcripts, 2500,2500)))
+    mart = biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
+    genes <- biomaRt::getBM(attributes = c("hgnc_symbol", "refseq_mrna"), filter = "refseq_mrna",
+                            values = hg19_refseq_promoters$tx_name, mart = mart)
+    genetxtable<-na.omit(genes[match(hg19_refseq_promoters$tx_name, genes$refseq_mrna),])
+    
+    
+    hg19_refseq_promoters$geneSymbol <- genes$hgnc_symbol[match(hg19_refseq_promoters$tx_name, genes$refseq_mrna)]
+    names(hg19_refseq_promoters)<-hg19_refseq_promoters$geneSymbol
+    na.symbol <- is.na(names(hg19_refseq_promoters))
+    names(hg19_refseq_promoters)[na.symbol] <- hg19_refseq_promoters$tx_name[na.symbol]
+  }
+  gene_region <- resize(hg19_refseq_promoters[geneSymbol], fix = "center", width = 2e5)
+  sig0.05_hic_data_from_hiccompare<-hiccontacts_with_metadata[hiccontacts_with_metadata@elementMetadata$....p.value<0.05,]
+  sig0.01_hic_data_from_hiccompare<-hiccontacts_with_metadata[hiccontacts_with_metadata@elementMetadata$....p.value<0.01,]
+  interaction_track0.05 <- InteractionTrack(sig0.05_hic_data_from_hiccompare, name = "diffLoops0.05", chromosome = as.character(seqnames(gene_region)))
+  interaction_track0.01 <- InteractionTrack(sig0.01_hic_data_from_hiccompare, name = "diffLoops0.01", chromosome = as.character(seqnames(gene_region)))
+  
+  displayPars(interaction_track0.05) = list(col.interactions="red", 
+                                            col.anchors.fill ="blue",
+                                            col.anchors.line = "black",
+                                            interaction.dimension="height", 
+                                            interaction.measure ="counts",
+                                            plot.trans=FALSE,
+                                            plot.outside = TRUE, 
+                                            col.outside="lightblue", 
+                                            anchor.height = 0.1,size=3)
+  displayPars(interaction_track0.01) = list(col.interactions="red", 
+                                            col.anchors.fill ="blue",
+                                            col.anchors.line = "black",
+                                            interaction.dimension="height", 
+                                            interaction.measure ="counts",
+                                            plot.trans=FALSE,
+                                            plot.outside = TRUE, 
+                                            col.outside="lightblue", 
+                                            anchor.height = 0.1,size=3)
+  
+  displayPars(promoterTrack) <- list(fill = "deepskyblue", col = NA, 
+                                     fontcolor.feature = "black", fontsize=8,
+                                     just.group="below",size=2)
+  
+  axTrack<-GenomeAxisTrack(littleTicks=T)
+  if (!is.null(peakfn1) & !is.null(peakfn2) & is.null(peakfn3) & is.null(peakfn4) & is.null(peakfn5))
+  {
+    peaks1<-data.table::fread(peakfn1,sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+    peaks2<-data.table::fread(peakfn2,sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+    peaks1gr<-GenomicRanges::GRanges(peaks1)
+    peaks2gr<-GenomicRanges::GRanges(peaks2)
+    peaks1grdt<-DataTrack(range=peaks1gr,start=start(gene_region),to=end(gene_region) ,col.main="green",chromosome = as.character(seqnames(gene_region)),genome="hg19")
+    peaks2grdt<-DataTrack(range=peaks2gr,start=start(gene_region),to=end(gene_region) ,col.main="green",chromosome = as.character(seqnames(gene_region)),genome="hg19")
+    displayPars(peaks1grdt)$min.height<-1
+    displayPars(peaks2grdt)$min.height<-1
+    displayPars(peaks1grdt) <- list(size=2)
+    displayPars(peaks2grdt) <- list(size=2)
+    geneTrack<-BiomartGeneRegionTrack(genome="hg19",chromosome=as.character(seqnames(gene_region)),start=start(gene_region),to=end(gene_region),transcriptAnnotation="symbol",name="Biomart Genes",size=2)
+    plotTracks(list(interaction_track0.05,interaction_track0.01,promoterTrack,geneTrack,peaks1grdt,peaks2grdt,axTrack), chromosome=as.character(seqnames(gene_region)), 
+               from=start(gene_region), to=end(gene_region),col.main = "black",sizes=c(3,3,2,2,1,1,1))
+    displayPars(peaks2grdt) <- list(size=1)
+  }
+  if (!is.null(peakfn1) & !is.null(peakfn2) & !is.null(peakfn3) & !is.null(peakfn4) & !is.null(peakfn5))
+  {
+    peaks1<-data.table::fread(peakfn1,sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+    peaks2<-data.table::fread(peakfn2,sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+    peaks3<-data.table::fread(peakfn3,sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+    peaks4<-data.table::fread(peakfn4,sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+    peaks5<-data.table::fread(peakfn5,sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
+    peaks1gr<-GenomicRanges::GRanges(peaks1)
+    peaks2gr<-GenomicRanges::GRanges(peaks2)
+    peaks3gr<-GenomicRanges::GRanges(peaks3)
+    peaks4gr<-GenomicRanges::GRanges(peaks4)
+    peaks5gr<-GenomicRanges::GRanges(peaks5)
+    peaks1grdt<-DataTrack(range=peaks1gr,start=start(gene_region),to=end(gene_region) ,col.main="green",chromosome = as.character(seqnames(gene_region)),genome="hg19")
+    peaks2grdt<-DataTrack(range=peaks2gr,start=start(gene_region),to=end(gene_region) ,col.main="green",chromosome = as.character(seqnames(gene_region)),genome="hg19")
+    peaks3grdt<-DataTrack(range=peaks3gr,start=start(gene_region),to=end(gene_region) ,col.main="green",chromosome = as.character(seqnames(gene_region)),genome="hg19")
+    peaks4grdt<-DataTrack(range=peaks4gr,start=start(gene_region),to=end(gene_region) ,col.main="green",chromosome = as.character(seqnames(gene_region)),genome="hg19")
+    peaks5grdt<-DataTrack(range=peaks5gr,start=start(gene_region),to=end(gene_region) ,col.main="green",chromosome = as.character(seqnames(gene_region)),genome="hg19")
+    # displayPars(peaks1grdt)$min.height<-1
+    # displayPars(peaks2grdt)$min.height<-1
+    # displayPars(peaks1grdt) <- list(size=2)
+    # displayPars(peaks2grdt) <- list(size=2)
+    geneTrack<-BiomartGeneRegionTrack(genome="hg19",chromosome=as.character(seqnames(gene_region)),start=start(gene_region),to=end(gene_region),transcriptAnnotation="symbol",name="Biomart Genes",size=2)
+    plotTracks(list(interaction_track0.05,interaction_track0.01,promoterTrack,geneTrack,peaks1grdt,peaks2grdt,peaks3grdt,peaks4grdt,peaks5grdt,axTrack), chromosome=as.character(seqnames(gene_region)), 
+               from=start(gene_region), to=end(gene_region),col.main = "black",sizes=c(3,3,2,2,1,1,1,1,1,1))
+    #displayPars(peaks2grdt) <- list(size=1)
+  }
+  # plotTracks(list(interaction_track0.05,interaction_track0.01,promoterTrack,SATB1MACSpeaks,axTrack), chromosome=as.character(seqnames(gene_region)), 
+  #            from=start(gene_region), to=end(gene_region),col.main = "black")
+  # 
+  
+}  
+
 #test case #1
 # SATB1.Pgr.MACS.summits.bed<-data.table::fread("W:/dalgleishjl/chipseq/swarmoutput/T47-D_SATB1_ChIP_Pgr_08.20.09T-47D_SATB1-10.02.09_summits.bed",sep="\t",col.names = c("chrom","chromstart","chromend","name","score"))
 # 
