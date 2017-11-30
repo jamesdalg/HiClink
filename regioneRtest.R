@@ -226,7 +226,16 @@ genomestats_1e4complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata 
 fwrite(genomestats_1e4complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
 genomestats_1e3complete<-ldply(getBinwiseOverlapStats(hiccontacts_with_metadata = hicgenint_full_sig,chipseqGRanges = SATB1.Pgr.MACS.summits.bed.GR.filtered,binwidth=1e3),data.frame)
 fwrite(genomestats_1e3complete_df,"genomestats_1e5complete_SATB1.Pgr_Pg_Neg_HiCcompare_0.05sig.csv")
-
+getBinwiseOverlapPercentsForGenome<-function(hiccontacts_with_metadata,chipseqGRanges,binwidth)
+{
+}
+#getBinwisePerm
+setwd("W:/dalgleishjl/HiClink/HiClink/")
+annotateBinwiseOverlapResults<-function(filename="")
+{
+  inputgenint<-readr::read_csv(filename)
+  GenomicRanges::GenomicRanges()
+}
 #-----------------------------------------------------------------------------------------------------
 #EXAMPLE1 code for regioneR (p.29)
 
